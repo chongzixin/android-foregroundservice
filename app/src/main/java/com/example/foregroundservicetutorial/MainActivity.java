@@ -39,10 +39,17 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // take the string from file, add a line break after so that new rows get written nicely
+        String text = Utils.readFromFile(this) + "\n";
+        txtLabel.setText(text);
+    }
+
     public void startService () {
         Intent serviceIntent = new Intent(this, NotificationService.class);
-        serviceIntent.putExtra("inputExtra", "Foreground Service Example in Android");
-
         ContextCompat.startForegroundService(this, serviceIntent);
     }
 

@@ -8,21 +8,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
-import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class NotificationService extends Service {
     private static final int ID_SERVICE = 101;
+
+    private Timer timer;
 
     @Nullable
     @Override public IBinder onBind(Intent intent) {
@@ -35,6 +32,7 @@ public class NotificationService extends Service {
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         String channelId = createNotificationChannel(notificationManager);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, channelId);
+        timer = new Timer();
 
         Notification notification = notificationBuilder.setOngoing(true)
                 .setContentTitle("Notification Service")
@@ -50,8 +48,18 @@ public class NotificationService extends Service {
         super.onStartCommand(intent, flags, startId);
 
         // start timer to run every minute, write to file
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                writeDateTimeToFile();
+            }}, 60000, 60000); // 60000 milliseconds = 1 minute
 
         return START_REDELIVER_INTENT;
+    }
+
+    private void writeDateTimeToFile() {
+        String currentTime = Utils.getCurrentDateTime();
+        Utils.writeToFile(currentTime, this);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -64,47 +72,5 @@ public class NotificationService extends Service {
         channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC); // will be shown in lock screen
         notificationManager.createNotificationChannel(channel);
         return channelId;
-    }
-
-    // functions to read/write file
-    private void writeToFile(String data,Context context) {
-        try {
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput("location.txt", Context.MODE_APPEND));
-            outputStreamWriter.write(data + "\n");
-            outputStreamWriter.close();
-        }
-        catch (IOException e) {
-            Log.e("Exception", "File write failed: " + e.toString());
-        }
-    }
-
-    private String readFromFile(Context context) {
-
-        String ret = "";
-
-        try {
-            InputStream inputStream = context.openFileInput("location.txt");
-
-            if ( inputStream != null ) {
-                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-                String receiveString = "";
-                StringBuilder stringBuilder = new StringBuilder();
-
-                while ( (receiveString = bufferedReader.readLine()) != null ) {
-                    stringBuilder.append("\n").append(receiveString);
-                }
-
-                inputStream.close();
-                ret = stringBuilder.toString();
-            }
-        }
-        catch (FileNotFoundException e) {
-            Log.e("location activity", "File not found: " + e.toString());
-        } catch (IOException e) {
-            Log.e("location activity", "Can not read file: " + e.toString());
-        }
-
-        return ret;
     }
 }

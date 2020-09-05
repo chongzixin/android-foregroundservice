@@ -37,7 +37,9 @@ public class NotificationService extends Service {
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, channelId);
 
         Notification notification = notificationBuilder.setOngoing(true)
-                .setContentTitle("Navigine Service Example")
+                .setContentTitle("Notification Service")
+                .setContentText("This should change to the current time")
+                .setSmallIcon(R.drawable.ic_launcher_background)
                 .setCategory(NotificationCompat.CATEGORY_SERVICE)
                 .build();
 

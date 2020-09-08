@@ -1,7 +1,10 @@
 package com.example.foregroundservicetutorial;
 
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
+
+import androidx.annotation.RequiresApi;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -11,6 +14,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -30,6 +34,7 @@ class Utils {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     static String readFromFile(Context context) {
 
         String ret = "";
@@ -41,19 +46,21 @@ class Utils {
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
                 BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
                 String receiveString = "";
-                StringBuilder stringBuilder = new StringBuilder();
                 List<String> tmp = new ArrayList<String>();
 
+                StringBuilder stringBuilder = new StringBuilder();
                 // read the file in reverse order and put into arraylist.
                 while ( (receiveString = bufferedReader.readLine()) != null ) {
                     tmp.add(receiveString);
-                }
-                for(int i=tmp.size()-1; i > 0; i--) {
-                    stringBuilder.append("\n").append(tmp.get(i));
+                    stringBuilder.append("\n").append(receiveString);
                 }
 
                 inputStream.close();
                 ret = stringBuilder.toString();
+
+                // reverse the order of the String
+                Collections.reverse(tmp);
+                ret = String.join("\n", tmp);
             }
         }
         catch (FileNotFoundException e) {

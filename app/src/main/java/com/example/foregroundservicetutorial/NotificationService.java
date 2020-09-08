@@ -8,16 +8,21 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class NotificationService extends Service {
     private static final int ID_SERVICE = 101;
+
+    private static final String PACKAGE_NAME = "com.example.foregroundservicetutorial";
+    static final String ACTION_BROADCAST = PACKAGE_NAME + ".broadcast";
 
     private Timer timer;
 
@@ -51,10 +56,18 @@ public class NotificationService extends Service {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                writeDateTimeToFile();
-            }}, 60000, 60000); // 60000 milliseconds = 1 minute
+                Log.i("NOTIFICATION_SERVICE", "ran at " + Utils.getCurrentDateTime());
 
-        return START_REDELIVER_INTENT;
+                // try in separate thread - timertask -> get at thread -> new runnable
+                writeDateTimeToFile();
+
+                // Notify anyone listening for broadcasts about the new location.
+                Intent intent = new Intent(ACTION_BROADCAST);
+                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
+            }}, 30000, 30000); // 60000 milliseconds = 1 minute
+
+        return START_STICKY;
     }
 
     private void writeDateTimeToFile() {

@@ -1,8 +1,6 @@
 package com.example.foregroundservicetutorial;
 
 import android.content.Context;
-import android.location.Location;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -12,7 +10,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 class Utils {
     static String getCurrentDateTime() {
@@ -42,9 +42,14 @@ class Utils {
                 BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
                 String receiveString = "";
                 StringBuilder stringBuilder = new StringBuilder();
+                List<String> tmp = new ArrayList<String>();
 
+                // read the file in reverse order and put into arraylist.
                 while ( (receiveString = bufferedReader.readLine()) != null ) {
-                    stringBuilder.append("\n").append(receiveString);
+                    tmp.add(receiveString);
+                }
+                for(int i=tmp.size()-1; i > 0; i--) {
+                    stringBuilder.append("\n").append(tmp.get(i));
                 }
 
                 inputStream.close();

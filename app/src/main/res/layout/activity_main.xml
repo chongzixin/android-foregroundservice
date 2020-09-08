@@ -39,21 +39,23 @@
 
     <ScrollView
         android:layout_width="379dp"
-        android:layout_height="565dp"
+        android:layout_height="400dp"
         android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@+id/buttonStopService"
-        tools:layout_editor_absoluteX="16dp">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttonStopService">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/txtLabel"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="TextView" />
+                android:layout_height="match_parent"
+                android:singleLine="false"
+                android:verticalScrollbarPosition="defaultPosition" />
         </LinearLayout>
     </ScrollView>
 

@@ -21,6 +21,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MAINACTIVITY";
+
     Button btnStartService, btnStopService, btnManufacturerIntent;
     TextView txtLabel;
     // The BroadcastReceiver used to listen from broadcasts from the service.
@@ -77,8 +79,6 @@ public class MainActivity extends AppCompatActivity {
         btnManufacturerIntent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.i("MAINACTIVITY", "clicked this button");
-
                 for (Intent intent : POWERMANAGER_INTENTS)
                     if (getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null) {
                         // may start multiple intents, so need to press BACK to check
@@ -106,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startService () {
+        Log.i(TAG, "starting service now");
         Intent serviceIntent = new Intent(this, NotificationService.class);
         ContextCompat.startForegroundService(this, serviceIntent);
     }
@@ -115,14 +116,21 @@ public class MainActivity extends AppCompatActivity {
         stopService(serviceIntent);
     }
 
-    // class that handles broadcasts events from NotificationService
+    // class that handles broadcasts events
+    // 1. when NotificationService sends a new timestamp, update the label
+    // 2. when the system is rebooted, start the service again
     private class MyReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            // take the additional text from the intent, then display in the label
-            String extra = intent.getStringExtra(NotificationService.INTENT_EXTRA);
-            String text = extra + "\n" + txtLabel.getText();
-            txtLabel.setText(text);
+            String intentAction = intent.getAction();
+            if(intentAction != null) {
+                if (intentAction.equals(NotificationService.ACTION_BROADCAST)) {
+                    // take the additional text from the intent, then display in the label
+                    String extra = intent.getStringExtra(NotificationService.INTENT_EXTRA);
+                    String text = extra + "\n" + txtLabel.getText();
+                    txtLabel.setText(text);
+                }
+            }
         }
     }
 }

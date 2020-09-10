@@ -16,6 +16,7 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 class Utils {
@@ -25,7 +26,7 @@ class Utils {
 
     static void writeToFile(String data,Context context) {
         try {
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput("location.txt", Context.MODE_APPEND));
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput("timestamp.txt", Context.MODE_APPEND));
             outputStreamWriter.write(data + "\n");
             outputStreamWriter.close();
         }
@@ -34,13 +35,12 @@ class Utils {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
     static String readFromFile(Context context) {
 
         String ret = "";
 
         try {
-            InputStream inputStream = context.openFileInput("location.txt");
+            InputStream inputStream = context.openFileInput("timestamp.txt");
 
             if ( inputStream != null ) {
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
@@ -56,11 +56,14 @@ class Utils {
                 }
 
                 inputStream.close();
-                ret = stringBuilder.toString();
 
-                // reverse the order of the String
-                Collections.reverse(tmp);
-                ret = String.join("\n", tmp);
+                // only display in reverse order if it's above Android 8.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    Collections.reverse(tmp);
+                    ret = String.join("\n", tmp);
+                } else {
+                    ret = stringBuilder.toString();
+                }
             }
         }
         catch (FileNotFoundException e) {

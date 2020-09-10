@@ -89,7 +89,7 @@ public class NotificationService extends Service {
     private Notification getNotification() {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setContentText("-")
-                .setContentTitle("Timestamp Updated: " + Utils.getCurrentDateTime())
+                .setContentTitle("Updated: " + Utils.getCurrentDateTime())
                 .setOngoing(true)
                 .setPriority(Notification.PRIORITY_HIGH)
                 .setSmallIcon(R.mipmap.ic_launcher)

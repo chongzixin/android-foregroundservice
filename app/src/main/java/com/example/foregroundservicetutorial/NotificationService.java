@@ -3,7 +3,6 @@ package com.example.foregroundservicetutorial;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -21,7 +20,7 @@ import java.util.TimerTask;
 
 public class NotificationService extends Service {
     private static final int NOTIFICATION_SERVICE_ID = 101;
-
+    private static final String TAG = "NOTIFICATION_SERVICE";
     private static final String CHANNEL_ID = "NOTIFICATION_SERVICE_CHANNELID";
     private static final String PACKAGE_NAME = "com.example.foregroundservicetutorial";
     static final String INTENT_EXTRA = "MESSAGE";
@@ -64,7 +63,7 @@ public class NotificationService extends Service {
             @Override
             public void run() {
                 String datetime = Utils.getCurrentDateTime();
-                Log.i("NOTIFICATION_SERVICE", "ran at " + datetime);
+                Log.i(TAG, "ran at " + datetime);
 
                 // try in separate thread - timertask -> get at thread -> new runnable
                 writeDateTimeToFile();
@@ -79,6 +78,12 @@ public class NotificationService extends Service {
             }}, 60000, 60000); // 60000 milliseconds = 1 minute
 
         return START_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Utils.writeToFile("NotiService destroyed at " + Utils.getCurrentDateTime(), this);
     }
 
     private void writeDateTimeToFile() {

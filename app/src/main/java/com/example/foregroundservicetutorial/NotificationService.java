@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -37,6 +38,11 @@ public class NotificationService extends Service {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override public void onCreate() {
         super.onCreate();
+
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_SERVICE_WAKELOCK:"+TAG);
+        wakeLock.acquire();
+
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         timer = new Timer();
 

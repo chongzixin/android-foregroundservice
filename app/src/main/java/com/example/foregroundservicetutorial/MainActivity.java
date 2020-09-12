@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import android.app.Notification;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -14,6 +13,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -27,6 +27,9 @@ public class MainActivity extends AppCompatActivity {
     TextView txtLabel;
     // The BroadcastReceiver used to listen from broadcasts from the service.
     MyReceiver myReceiver;
+
+    PowerManager powerManager;
+    PowerManager.WakeLock wakeLock;
 
     private static final Intent[] POWERMANAGER_INTENTS = {
             new Intent("miui.intent.action.POWER_HIDE_MODE_APP_LIST").addCategory(Intent.CATEGORY_DEFAULT), // xiaomi - set battery saver to no restrictions
@@ -51,10 +54,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         myReceiver = new MyReceiver();
 
+        Utils.writeToFile("First Launched on " + Utils.getCurrentDateTime(), this);
+
         btnStartService = findViewById(R.id.buttonStartService);
         btnStopService = findViewById(R.id.buttonStopService);
         btnManufacturerIntent = findViewById(R.id.btnManufacturerIntent);
         txtLabel = findViewById(R.id.txtLabel);
+
+        powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_WAKELOCK:"+TAG);
+        wakeLock.acquire();
 
         btnStartService.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -79,11 +88,15 @@ public class MainActivity extends AppCompatActivity {
         btnManufacturerIntent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                boolean nothingToShow = true;
                 for (Intent intent : POWERMANAGER_INTENTS)
                     if (getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null) {
+                        nothingToShow = false;
                         // may start multiple intents, so need to press BACK to check
                         startActivity(intent);
                     }
+                if(nothingToShow)
+                    Toast.makeText(getApplicationContext(), "No Manufacturer Settings.", Toast.LENGTH_SHORT).show();
             }
         });
     }

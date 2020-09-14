@@ -13,12 +13,16 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.PowerManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MAINACTIVITY";
@@ -28,8 +32,9 @@ public class MainActivity extends AppCompatActivity {
     // The BroadcastReceiver used to listen from broadcasts from the service.
     MyReceiver myReceiver;
 
-//    PowerManager powerManager;
-////    PowerManager.WakeLock wakeLock;
+    PowerManager.WakeLock wakeLock;
+    Handler handler;
+    Runnable runnable;
 
     private static final Intent[] POWERMANAGER_INTENTS = {
             new Intent("miui.intent.action.POWER_HIDE_MODE_APP_LIST").addCategory(Intent.CATEGORY_DEFAULT), // xiaomi - set battery saver to no restrictions
@@ -61,9 +66,19 @@ public class MainActivity extends AppCompatActivity {
         btnManufacturerIntent = findViewById(R.id.btnManufacturerIntent);
         txtLabel = findViewById(R.id.txtLabel);
 
-//        powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-//        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_WAKELOCK:"+TAG);
-//        wakeLock.acquire();
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_WAKELOCK:"+TAG);
+        wakeLock.acquire();
+
+        handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                Log.i(TAG, "recreated MainActivity at " + Utils.getCurrentDateTime());
+                runnable = this;
+                recreate();
+                handler.postDelayed(this, 3*60*1000);
+            }
+        }, 3*60*1000);
 
         btnStartService.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -99,6 +114,13 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "No Manufacturer Settings.", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if(wakeLock.isHeld()) wakeLock.release();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)

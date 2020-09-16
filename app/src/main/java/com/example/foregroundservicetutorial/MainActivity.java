@@ -34,7 +34,6 @@ public class MainActivity extends AppCompatActivity {
 
     PowerManager.WakeLock wakeLock;
     Handler handler;
-    Runnable runnable;
 
     private static final Intent[] POWERMANAGER_INTENTS = {
             new Intent("miui.intent.action.POWER_HIDE_MODE_APP_LIST").addCategory(Intent.CATEGORY_DEFAULT), // xiaomi - set battery saver to no restrictions
@@ -59,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         myReceiver = new MyReceiver();
 
-        Utils.writeToFile("First Launched on " + Utils.getCurrentDateTime(), this);
+        Utils.writeToFile(Utils.getCurrentDateTime() + " onCreate MainActivity", this);
 
         btnStartService = findViewById(R.id.buttonStartService);
         btnStopService = findViewById(R.id.buttonStopService);
@@ -74,11 +73,9 @@ public class MainActivity extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             public void run() {
                 Log.i(TAG, "recreated MainActivity at " + Utils.getCurrentDateTime());
-                runnable = this;
                 recreate();
-                handler.postDelayed(this, 3*60*1000);
             }
-        }, 3*60*1000);
+        }, 5*60*1000);
 
         btnStartService.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -152,8 +149,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // class that handles broadcasts events
-    // 1. when NotificationService sends a new timestamp, update the label
-    // 2. when the system is rebooted, start the service again
+    // when NotificationService sends a new timestamp, update the label
     private class MyReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {

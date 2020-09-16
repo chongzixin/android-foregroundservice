@@ -7,6 +7,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
@@ -38,10 +39,12 @@ public class NotificationService extends Service {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override public void onCreate() {
         super.onCreate();
+        Log.i(TAG, Utils.getCurrentDateTime() + " onCreate Service");
+        Utils.writeToFile(Utils.getCurrentDateTime() + " onCreate Service", this);
 
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_SERVICE_WAKELOCK:"+TAG);
-        wakeLock.acquire();
+        if(!wakeLock.isHeld()) wakeLock.acquire();
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         timer = new Timer();
@@ -58,18 +61,29 @@ public class NotificationService extends Service {
             notificationManager.createNotificationChannel(channel);
         }
 
+        // recreate itself every 5 minutes by calling onCreate again
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                Log.i(TAG, Utils.getCurrentDateTime() + " recreated Service");
+                onCreate();
+            }
+        }, 5*60*1000);
+
         startForeground(NOTIFICATION_SERVICE_ID, getNotification());
     }
 
     @Override public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
+        Log.i(TAG, Utils.getCurrentDateTime() + " onStartCommand Service");
+        Utils.writeToFile(Utils.getCurrentDateTime() + " onStartCommand Service", this);
 
         // start timer to run every minute, write to file
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 String datetime = Utils.getCurrentDateTime();
-                Log.i(TAG, "ran at " + datetime);
+                Log.i(TAG, "timer ran at " + datetime);
 
                 // try in separate thread - timertask -> get at thread -> new runnable
                 writeDateTimeToFile();
@@ -89,7 +103,21 @@ public class NotificationService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Utils.writeToFile("NotiService destroyed at " + Utils.getCurrentDateTime(), this);
+        Utils.writeToFile(Utils.getCurrentDateTime() + " onDestroy Service", this);
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        Utils.writeToFile(Utils.getCurrentDateTime() + " onLowMemory Service", this);
+        Log.i(TAG, Utils.getCurrentDateTime() + " onLowMemory Service");
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        Utils.writeToFile(Utils.getCurrentDateTime() + " onTaskRemoved Service", this);
+        Log.i(TAG, Utils.getCurrentDateTime() + " onTaskRemoved Service");
     }
 
     private void writeDateTimeToFile() {

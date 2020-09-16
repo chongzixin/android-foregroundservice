@@ -14,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.Log;
@@ -21,6 +22,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MAINACTIVITY";
@@ -32,7 +36,8 @@ public class MainActivity extends AppCompatActivity {
     MyReceiver myReceiver;
 
     PowerManager powerManager;
-////    PowerManager.WakeLock wakeLock;
+    PowerManager.WakeLock wakeLock;
+    Handler handler;
 
     private static final Intent[] POWERMANAGER_INTENTS = {
             new Intent("miui.intent.action.POWER_HIDE_MODE_APP_LIST").addCategory(Intent.CATEGORY_DEFAULT), // xiaomi - set battery saver to no restrictions
@@ -57,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         myReceiver = new MyReceiver();
 
-        Utils.writeToFile("First Launched on " + Utils.getCurrentDateTime(), this);
+        Utils.writeToFile(Utils.getCurrentDateTime() + " onCreate MainActivity", this);
 
         btnStartService = findViewById(R.id.buttonStartService);
         btnStopService = findViewById(R.id.buttonStopService);
@@ -66,8 +71,16 @@ public class MainActivity extends AppCompatActivity {
         txtLabel = findViewById(R.id.txtLabel);
 
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-//        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_WAKELOCK:"+TAG);
-//        wakeLock.acquire();
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_WAKELOCK:"+TAG);
+        wakeLock.acquire();
+
+        handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            public void run() {
+                Log.i(TAG, "recreated MainActivity at " + Utils.getCurrentDateTime());
+                recreate();
+            }
+        }, 5*60*1000);
 
         btnStartService.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -124,6 +137,13 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if(wakeLock.isHeld()) wakeLock.release();
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onResume() {
@@ -162,8 +182,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // class that handles broadcasts events
-    // 1. when NotificationService sends a new timestamp, update the label
-    // 2. when the system is rebooted, start the service again
+    // when NotificationService sends a new timestamp, update the label
     private class MyReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {

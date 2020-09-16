@@ -7,7 +7,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
@@ -60,15 +59,6 @@ public class NotificationService extends Service {
             // Set the Notification Channel for the Notification Manager.
             notificationManager.createNotificationChannel(channel);
         }
-
-        // recreate itself every 5 minutes by calling onCreate again
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            public void run() {
-                Log.i(TAG, Utils.getCurrentDateTime() + " recreated Service");
-                onCreate();
-            }
-        }, 5*60*1000);
 
         startForeground(NOTIFICATION_SERVICE_ID, getNotification());
     }

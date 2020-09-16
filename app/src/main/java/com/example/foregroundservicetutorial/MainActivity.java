@@ -23,9 +23,6 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MAINACTIVITY";
     private static final String PACKAGE_NAME = "com.example.foregroundservicetutorial";
@@ -73,14 +70,6 @@ public class MainActivity extends AppCompatActivity {
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_WAKELOCK:"+TAG);
         wakeLock.acquire();
-
-        handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            public void run() {
-                Log.i(TAG, "recreated MainActivity at " + Utils.getCurrentDateTime());
-                recreate();
-            }
-        }, 5*60*1000);
 
         btnStartService.setOnClickListener(new View.OnClickListener() {
             @Override

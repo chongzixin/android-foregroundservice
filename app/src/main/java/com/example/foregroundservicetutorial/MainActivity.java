@@ -11,10 +11,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -26,12 +28,14 @@ import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MAINACTIVITY";
+    private static final String PACKAGE_NAME = "com.example.foregroundservicetutorial";
 
-    Button btnStartService, btnStopService, btnManufacturerIntent;
+    Button btnStartService, btnStopService, btnWhitelist, btnManufacturerIntent;
     TextView txtLabel;
     // The BroadcastReceiver used to listen from broadcasts from the service.
     MyReceiver myReceiver;
 
+    PowerManager powerManager;
     PowerManager.WakeLock wakeLock;
     Handler handler;
 
@@ -62,10 +66,11 @@ public class MainActivity extends AppCompatActivity {
 
         btnStartService = findViewById(R.id.buttonStartService);
         btnStopService = findViewById(R.id.buttonStopService);
+        btnWhitelist = findViewById(R.id.btnWhitelist);
         btnManufacturerIntent = findViewById(R.id.btnManufacturerIntent);
         txtLabel = findViewById(R.id.txtLabel);
 
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_WAKELOCK:"+TAG);
         wakeLock.acquire();
 
@@ -94,6 +99,25 @@ public class MainActivity extends AppCompatActivity {
                 txtLabel.setText("stop service");
                 btnStartService.setEnabled(true);
                 btnStopService.setEnabled(false);
+            }
+        });
+
+        btnWhitelist.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent();
+                String whitelistStatus = "Whitelisted: ";
+                if (powerManager.isIgnoringBatteryOptimizations(PACKAGE_NAME)) {
+                    intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+                    whitelistStatus += "YES";
+                } else {
+                    // show the intent to add this app to whitelist
+                    intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                    intent.setData(Uri.parse("package:" + PACKAGE_NAME));
+                    whitelistStatus += "NO";
+                }
+                btnWhitelist.setText(whitelistStatus);
+                startActivity(intent);
             }
         });
 
@@ -129,6 +153,15 @@ public class MainActivity extends AppCompatActivity {
         // take the string from file, add a line break after so that new rows get written nicely
         String text = Utils.readFromFile(this) + "\n";
         txtLabel.setText(text);
+
+        // check the whitelist status then set the button text.
+        String whitelistStatus = "Whitelisted: ";
+        if (powerManager.isIgnoringBatteryOptimizations(PACKAGE_NAME)) {
+            whitelistStatus += "YES";
+        } else {
+            whitelistStatus += "NO";
+        }
+        btnWhitelist.setText(whitelistStatus);
     }
 
     @Override

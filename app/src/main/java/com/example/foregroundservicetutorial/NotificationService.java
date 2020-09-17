@@ -1,5 +1,6 @@
 package com.example.foregroundservicetutorial;
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -46,7 +47,6 @@ public class NotificationService extends Service {
         if(!wakeLock.isHeld()) wakeLock.acquire();
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        timer = new Timer();
 
         // Android O requires a Notification Channel.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -68,25 +68,7 @@ public class NotificationService extends Service {
         Log.i(TAG, Utils.getCurrentDateTime() + " onStartCommand Service");
         Utils.writeToFile(Utils.getCurrentDateTime() + " onStartCommand Service", this);
 
-        // start timer to run every minute, write to file
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                String datetime = Utils.getCurrentDateTime();
-                Log.i(TAG, "timer ran at " + datetime);
-
-                // try in separate thread - timertask -> get at thread -> new runnable
-                writeDateTimeToFile();
-
-                // Notify anyone listening for broadcasts about the new location.
-                Intent intent = new Intent(ACTION_BROADCAST);
-                intent.putExtra(INTENT_EXTRA, datetime);
-                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-
-                // update the notification
-                notificationManager.notify(NOTIFICATION_SERVICE_ID, getNotification());
-            }}, 60000, 60000); // 60000 milliseconds = 1 minute
-
+        AlarmReceiver.scheduleExactAlarm(NotificationService.this, (AlarmManager) getSystemService(ALARM_SERVICE));
         return START_STICKY;
     }
 
@@ -94,6 +76,7 @@ public class NotificationService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Utils.writeToFile(Utils.getCurrentDateTime() + " onDestroy Service", this);
+        AlarmReceiver.cancelAlarm(this, (AlarmManager)getSystemService(ALARM_SERVICE));
     }
 
     @Override

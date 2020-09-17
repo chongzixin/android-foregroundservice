@@ -25,7 +25,27 @@ public class NotificationService extends Service {
     static final String INTENT_EXTRA = "MESSAGE";
     static final String ACTION_BROADCAST = PACKAGE_NAME + ".broadcast";
 
-    private Handler handler;
+    Handler handler = new Handler();
+    private Runnable periodicUpdate = new Runnable() {
+        @Override
+        public void run() {
+            // scheduled another event to run 1 minute later
+            handler.postDelayed(periodicUpdate, 60*1000);
+
+            String datetime = Utils.getCurrentDateTime();
+            Log.i(TAG, "handler ran at " + datetime);
+            writeDateTimeToFile();
+
+            // Notify anyone listening for broadcasts about the new location.
+            Intent intent = new Intent(ACTION_BROADCAST);
+            intent.putExtra(INTENT_EXTRA, datetime);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
+            // update the notification
+            notificationManager.notify(NOTIFICATION_SERVICE_ID, getNotification());
+        }
+    };
+
     private NotificationManager notificationManager;
 
     @Nullable
@@ -44,7 +64,6 @@ public class NotificationService extends Service {
         if(!wakeLock.isHeld()) wakeLock.acquire();
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        handler = new Handler();
 
         // Android O requires a Notification Channel.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -66,22 +85,8 @@ public class NotificationService extends Service {
         Log.i(TAG, Utils.getCurrentDateTime() + " onStartCommand Service");
         Utils.writeToFile(Utils.getCurrentDateTime() + " onStartCommand Service", this);
 
-        handler.postDelayed(new Runnable() {
-            public void run() {
-                String datetime = Utils.getCurrentDateTime();
-                Log.i(TAG, "timer ran at " + datetime);
-
-                // try in separate thread - timertask -> get at thread -> new runnable
-                writeDateTimeToFile();
-
-                // Notify anyone listening for broadcasts about the new location.
-                Intent intent = new Intent(ACTION_BROADCAST);
-                intent.putExtra(INTENT_EXTRA, datetime);
-                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-
-                // update the notification
-                notificationManager.notify(NOTIFICATION_SERVICE_ID, getNotification());
-            }}, 1*60*1000);
+        // start running the task
+        handler.post(periodicUpdate);
 
         return START_STICKY;
     }

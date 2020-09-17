@@ -7,6 +7,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
@@ -16,9 +17,6 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 public class NotificationService extends Service {
     private static final int NOTIFICATION_SERVICE_ID = 101;
     private static final String TAG = "NOTIFICATION_SERVICE";
@@ -27,7 +25,7 @@ public class NotificationService extends Service {
     static final String INTENT_EXTRA = "MESSAGE";
     static final String ACTION_BROADCAST = PACKAGE_NAME + ".broadcast";
 
-    private Timer timer;
+    private Handler handler;
     private NotificationManager notificationManager;
 
     @Nullable
@@ -46,7 +44,7 @@ public class NotificationService extends Service {
         if(!wakeLock.isHeld()) wakeLock.acquire();
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        timer = new Timer();
+        handler = new Handler();
 
         // Android O requires a Notification Channel.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -68,9 +66,7 @@ public class NotificationService extends Service {
         Log.i(TAG, Utils.getCurrentDateTime() + " onStartCommand Service");
         Utils.writeToFile(Utils.getCurrentDateTime() + " onStartCommand Service", this);
 
-        // start timer to run every minute, write to file
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
+        handler.postDelayed(new Runnable() {
             public void run() {
                 String datetime = Utils.getCurrentDateTime();
                 Log.i(TAG, "timer ran at " + datetime);
@@ -85,7 +81,7 @@ public class NotificationService extends Service {
 
                 // update the notification
                 notificationManager.notify(NOTIFICATION_SERVICE_ID, getNotification());
-            }}, 60000, 60000); // 60000 milliseconds = 1 minute
+            }}, 1*60*1000);
 
         return START_STICKY;
     }

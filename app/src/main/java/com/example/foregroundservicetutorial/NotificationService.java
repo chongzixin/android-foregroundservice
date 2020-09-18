@@ -95,6 +95,7 @@ public class NotificationService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Utils.writeToFile(Utils.getCurrentDateTime() + " onDestroy Service", this);
+        Log.i(TAG, Utils.getCurrentDateTime() + " onDestroy Service");
     }
 
     @Override

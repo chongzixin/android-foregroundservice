@@ -33,8 +33,6 @@ public class MainActivity extends AppCompatActivity {
     MyReceiver myReceiver;
 
     PowerManager powerManager;
-    PowerManager.WakeLock wakeLock;
-    Handler handler;
 
     private static final Intent[] POWERMANAGER_INTENTS = {
             new Intent("miui.intent.action.POWER_HIDE_MODE_APP_LIST").addCategory(Intent.CATEGORY_DEFAULT), // xiaomi - set battery saver to no restrictions
@@ -68,8 +66,6 @@ public class MainActivity extends AppCompatActivity {
         txtLabel = findViewById(R.id.txtLabel);
 
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_WAKELOCK:"+TAG);
-        wakeLock.acquire();
 
         btnStartService.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -129,8 +125,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
-        if(wakeLock.isHeld()) wakeLock.release();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)

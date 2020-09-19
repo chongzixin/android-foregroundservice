@@ -10,15 +10,13 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class NotificationService extends Service {
     private static final int NOTIFICATION_SERVICE_ID = 101;
@@ -28,8 +26,32 @@ public class NotificationService extends Service {
     static final String INTENT_EXTRA = "MESSAGE";
     static final String ACTION_BROADCAST = PACKAGE_NAME + ".broadcast";
 
-    private Timer timer;
     private NotificationManager notificationManager;
+
+    private PowerManager powerManager;
+    private PowerManager.WakeLock wakeLock;
+
+    Handler handler = new Handler();
+    private Runnable periodicUpdate = new Runnable() {
+        @Override
+        public void run() {
+            // scheduled another event to run 1 minute later
+            // SystemClock.elapsedRealtime()%1000 takes into consideration time drift
+            handler.postDelayed(periodicUpdate, 60*1000-SystemClock.elapsedRealtime()%1000);
+
+            String datetime = Utils.getCurrentDateTime();
+            Log.i(TAG, "handler ran at " + datetime);
+            writeDateTimeToFile();
+
+            // Notify anyone listening for broadcasts about the new location.
+            Intent intent = new Intent(ACTION_BROADCAST);
+            intent.putExtra(INTENT_EXTRA, datetime);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
+            // update the notification
+            notificationManager.notify(NOTIFICATION_SERVICE_ID, getNotification());
+        }
+    };
 
     @Nullable
     @Override public IBinder onBind(Intent intent) {
@@ -42,12 +64,11 @@ public class NotificationService extends Service {
         Log.i(TAG, Utils.getCurrentDateTime() + " onCreate Service");
         Utils.writeToFile(Utils.getCurrentDateTime() + " onCreate Service", this);
 
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_SERVICE_WAKELOCK:"+TAG);
+        powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_SERVICE_WAKELOCK:"+TAG);
         if(!wakeLock.isHeld()) wakeLock.acquire();
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        timer = new Timer();
 
         // Android O requires a Notification Channel.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -61,15 +82,6 @@ public class NotificationService extends Service {
             notificationManager.createNotificationChannel(channel);
         }
 
-        // recreate itself every 5 minutes by calling onCreate again
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            public void run() {
-                Log.i(TAG, Utils.getCurrentDateTime() + " recreated Service");
-                onCreate();
-            }
-        }, 5*60*1000);
-
         startForeground(NOTIFICATION_SERVICE_ID, getNotification());
     }
 
@@ -78,24 +90,8 @@ public class NotificationService extends Service {
         Log.i(TAG, Utils.getCurrentDateTime() + " onStartCommand Service");
         Utils.writeToFile(Utils.getCurrentDateTime() + " onStartCommand Service", this);
 
-        // start timer to run every minute, write to file
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                String datetime = Utils.getCurrentDateTime();
-                Log.i(TAG, "timer ran at " + datetime);
-
-                // try in separate thread - timertask -> get at thread -> new runnable
-                writeDateTimeToFile();
-
-                // Notify anyone listening for broadcasts about the new location.
-                Intent intent = new Intent(ACTION_BROADCAST);
-                intent.putExtra(INTENT_EXTRA, datetime);
-                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-
-                // update the notification
-                notificationManager.notify(NOTIFICATION_SERVICE_ID, getNotification());
-            }}, 60000, 60000); // 60000 milliseconds = 1 minute
+        // start running the task
+        handler.post(periodicUpdate);
 
         return START_STICKY;
     }
@@ -104,6 +100,7 @@ public class NotificationService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Utils.writeToFile(Utils.getCurrentDateTime() + " onDestroy Service", this);
+        Log.i(TAG, Utils.getCurrentDateTime() + " onDestroy Service");
     }
 
     @Override

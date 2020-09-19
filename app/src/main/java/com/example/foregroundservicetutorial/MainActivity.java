@@ -23,9 +23,6 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MAINACTIVITY";
     private static final String PACKAGE_NAME = "com.example.foregroundservicetutorial";
@@ -36,7 +33,6 @@ public class MainActivity extends AppCompatActivity {
     MyReceiver myReceiver;
 
     PowerManager powerManager;
-    Handler handler;
 
     private static final Intent[] POWERMANAGER_INTENTS = {
             new Intent("miui.intent.action.POWER_HIDE_MODE_APP_LIST").addCategory(Intent.CATEGORY_DEFAULT), // xiaomi - set battery saver to no restrictions
@@ -70,14 +66,6 @@ public class MainActivity extends AppCompatActivity {
         txtLabel = findViewById(R.id.txtLabel);
 
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-
-        handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            public void run() {
-                Log.i(TAG, "recreated MainActivity at " + Utils.getCurrentDateTime());
-                recreate();
-            }
-        }, 5*60*1000);
 
         btnStartService.setOnClickListener(new View.OnClickListener() {
             @Override

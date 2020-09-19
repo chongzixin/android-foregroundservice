@@ -53,6 +53,20 @@ public class NotificationService extends Service {
         }
     };
 
+    Handler handler2 = new Handler();
+    private Runnable periodicRecreate = new Runnable() {
+        @RequiresApi(api = Build.VERSION_CODES.O)
+        @Override
+        public void run() {
+            // scheduled another event to run 5 minute later
+            // SystemClock.elapsedRealtime()%1000 takes into consideration time drift
+            handler2.postDelayed(periodicRecreate, 5*60*1000-SystemClock.elapsedRealtime()%1000);
+
+            Log.i(TAG, "recreating service on " + Utils.getCurrentDateTime());
+            onCreate();
+        }
+    };
+
     @Nullable
     @Override public IBinder onBind(Intent intent) {
         return null;
@@ -90,8 +104,9 @@ public class NotificationService extends Service {
         Log.i(TAG, Utils.getCurrentDateTime() + " onStartCommand Service");
         Utils.writeToFile(Utils.getCurrentDateTime() + " onStartCommand Service", this);
 
-        // start running the task
+        // start running the tasks
         handler.post(periodicUpdate);
+        handler2.post(periodicRecreate);
 
         return START_STICKY;
     }

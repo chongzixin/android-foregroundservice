@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -35,7 +36,8 @@ public class NotificationService extends Service {
         @Override
         public void run() {
             // scheduled another event to run 1 minute later
-            handler.postDelayed(periodicUpdate, 60*1000);
+            // SystemClock.elapsedRealtime()%1000 takes into consideration time drift
+            handler.postDelayed(periodicUpdate, 60*1000-SystemClock.elapsedRealtime()%1000);
 
             String datetime = Utils.getCurrentDateTime();
             Log.i(TAG, "handler ran at " + datetime);

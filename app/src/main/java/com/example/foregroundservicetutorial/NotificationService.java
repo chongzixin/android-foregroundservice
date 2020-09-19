@@ -9,16 +9,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.PowerManager;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class NotificationService extends Service {
     private static final int NOTIFICATION_SERVICE_ID = 101;
@@ -28,7 +23,6 @@ public class NotificationService extends Service {
     static final String INTENT_EXTRA = "MESSAGE";
     static final String ACTION_BROADCAST = PACKAGE_NAME + ".broadcast";
 
-    private Timer timer;
     private NotificationManager notificationManager;
 
     @Nullable
@@ -41,10 +35,6 @@ public class NotificationService extends Service {
         super.onCreate();
         Log.i(TAG, Utils.getCurrentDateTime() + " onCreate Service");
         Utils.writeToFile(Utils.getCurrentDateTime() + " onCreate Service", this);
-
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_SERVICE_WAKELOCK:"+TAG);
-        if(!wakeLock.isHeld()) wakeLock.acquire();
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
@@ -68,7 +58,7 @@ public class NotificationService extends Service {
         Log.i(TAG, Utils.getCurrentDateTime() + " onStartCommand Service");
         Utils.writeToFile(Utils.getCurrentDateTime() + " onStartCommand Service", this);
 
-        AlarmReceiver.scheduleExactAlarm(NotificationService.this, (AlarmManager) getSystemService(ALARM_SERVICE));
+        AlarmReceiver.scheduleExactAlarm(this, (AlarmManager) getSystemService(ALARM_SERVICE));
         return START_STICKY;
     }
 
@@ -91,11 +81,6 @@ public class NotificationService extends Service {
         super.onTaskRemoved(rootIntent);
         Utils.writeToFile(Utils.getCurrentDateTime() + " onTaskRemoved Service", this);
         Log.i(TAG, Utils.getCurrentDateTime() + " onTaskRemoved Service");
-    }
-
-    private void writeDateTimeToFile() {
-        String currentTime = Utils.getCurrentDateTime();
-        Utils.writeToFile(currentTime, this);
     }
 
     private Notification getNotification() {

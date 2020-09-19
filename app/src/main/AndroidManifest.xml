@@ -39,7 +39,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".AlarmReceiver" android:process=":remote" />
+        <receiver android:name=".AlarmReceiver"></receiver>
     </application>
 
 </manifest>

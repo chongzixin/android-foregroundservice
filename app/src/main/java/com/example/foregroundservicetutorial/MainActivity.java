@@ -33,7 +33,6 @@ public class MainActivity extends AppCompatActivity {
     MyReceiver myReceiver;
 
     PowerManager powerManager;
-    PowerManager.WakeLock wakeLock;
     Handler handler;
 
     private static final Intent[] POWERMANAGER_INTENTS = {
@@ -68,8 +67,6 @@ public class MainActivity extends AppCompatActivity {
         txtLabel = findViewById(R.id.txtLabel);
 
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_WAKELOCK:"+TAG);
-        wakeLock.acquire();
 
         btnStartService.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -129,8 +126,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
-        if(wakeLock.isHeld()) wakeLock.release();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)

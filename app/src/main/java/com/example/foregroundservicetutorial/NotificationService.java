@@ -30,6 +30,9 @@ public class NotificationService extends Service {
     private Timer timer;
     private NotificationManager notificationManager;
 
+    private PowerManager powerManager;
+    private PowerManager.WakeLock wakeLock;
+
     @Nullable
     @Override public IBinder onBind(Intent intent) {
         return null;
@@ -41,8 +44,8 @@ public class NotificationService extends Service {
         Log.i(TAG, Utils.getCurrentDateTime() + " onCreate Service");
         Utils.writeToFile(Utils.getCurrentDateTime() + " onCreate Service", this);
 
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_SERVICE_WAKELOCK:"+TAG);
+        powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "FOREGROUNDAPP_SERVICE_WAKELOCK:"+TAG);
         if(!wakeLock.isHeld()) wakeLock.acquire();
 
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);

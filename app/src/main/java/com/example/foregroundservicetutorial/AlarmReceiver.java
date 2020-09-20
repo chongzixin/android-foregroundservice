@@ -43,8 +43,9 @@ public class AlarmReceiver extends BroadcastReceiver {
                 intent.putExtra(INTENT_EXTRA, datetime);
                 LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
+                // TODO: FIX THIS SO THAT NOTIFICATION GETS UPDATED.
                 // update the notification
-//                context.getSystemService(Context.NOTIFICATION_SERVICE).notify(NOTIFICATION_SERVICE_ID, getNotification());
+                // context.getSystemService(Context.NOTIFICATION_SERVICE).notify(NOTIFICATION_SERVICE_ID, getNotification());
             }
         };
 
@@ -56,7 +57,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         Intent intent = new Intent(context, AlarmReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
         Log.i(TAG, "scheduling next alarm now.");
-        alarms.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime()+10*1000-SystemClock.elapsedRealtime()%1000, pendingIntent);
+        alarms.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime()+60*1000-SystemClock.elapsedRealtime()%1000, pendingIntent);
     }
 
     public static void cancelAlarm(Context context, AlarmManager alarms) {

@@ -20,7 +20,7 @@ public class AlarmReceiver extends BroadcastReceiver {
     static final String ACTION_BROADCAST = PACKAGE_NAME + ".broadcast";
 
     @Override
-    public void onReceive(final Context context, final Intent intent) {
+    public void onReceive(final Context context, Intent intent) {
         // schedule for next alarm
         scheduleExactAlarm(context, (AlarmManager)context.getSystemService(Context.ALARM_SERVICE));
 
@@ -33,8 +33,8 @@ public class AlarmReceiver extends BroadcastReceiver {
             @Override
             public void run() {
                 // do job
-                Log.i(TAG, Utils.getCurrentDateTime() + " in AlarmManager run()");
                 String datetime = Utils.getCurrentDateTime();
+                Log.i(TAG, datetime + " in AlarmManager run()");
 
                 writeDateTimeToFile(context);
 
@@ -56,8 +56,9 @@ public class AlarmReceiver extends BroadcastReceiver {
     public static void scheduleExactAlarm(Context context, AlarmManager alarms) {
         Intent intent = new Intent(context, AlarmReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
-        Log.i(TAG, "scheduling next alarm now.");
-        alarms.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime()+60*1000-SystemClock.elapsedRealtime()%1000, pendingIntent);
+
+        alarms.setAlarmClock(new AlarmManager.AlarmClockInfo(System.currentTimeMillis()+60*1000, null), pendingIntent);
+//        alarms.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime()+60*1000-SystemClock.elapsedRealtime()%1000, pendingIntent);
     }
 
     public static void cancelAlarm(Context context, AlarmManager alarms) {

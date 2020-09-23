@@ -8,12 +8,14 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+
 
 public class NotificationService extends Service {
     private static final int NOTIFICATION_SERVICE_ID = 101;
@@ -25,6 +27,31 @@ public class NotificationService extends Service {
 
     private NotificationManager notificationManager;
 
+    private PowerManager powerManager;
+    private PowerManager.WakeLock wakeLock;
+
+    Handler handler = new Handler();
+    private Runnable periodicUpdate = new Runnable() {
+        @Override
+        public void run() {
+            // scheduled another event to run 1 minute later
+            // SystemClock.elapsedRealtime()%1000 takes into consideration time drift
+            handler.postDelayed(periodicUpdate, 60*1000-SystemClock.elapsedRealtime()%1000);
+
+            String datetime = Utils.getCurrentDateTime();
+            Log.i(TAG, "handler ran at " + datetime);
+            writeDateTimeToFile();
+
+            // Notify anyone listening for broadcasts about the new location.
+            Intent intent = new Intent(ACTION_BROADCAST);
+            intent.putExtra(INTENT_EXTRA, datetime);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
+            // update the notification
+            notificationManager.notify(NOTIFICATION_SERVICE_ID, getNotification());
+        }
+    };
+
     @Nullable
     @Override public IBinder onBind(Intent intent) {
         return null;
@@ -35,7 +62,6 @@ public class NotificationService extends Service {
         super.onCreate();
         Log.i(TAG, Utils.getCurrentDateTime() + " onCreate Service");
         Utils.writeToFile(Utils.getCurrentDateTime() + " onCreate Service", this);
-
         notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         // Android O requires a Notification Channel.
@@ -59,6 +85,7 @@ public class NotificationService extends Service {
         Utils.writeToFile(Utils.getCurrentDateTime() + " onStartCommand Service", this);
 
         AlarmReceiver.scheduleExactAlarm(this, (AlarmManager) getSystemService(ALARM_SERVICE));
+
         return START_STICKY;
     }
 

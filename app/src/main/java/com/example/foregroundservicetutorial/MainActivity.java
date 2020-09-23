@@ -33,7 +33,6 @@ public class MainActivity extends AppCompatActivity {
     MyReceiver myReceiver;
 
     PowerManager powerManager;
-    Handler handler;
 
     private static final Intent[] POWERMANAGER_INTENTS = {
             new Intent("miui.intent.action.POWER_HIDE_MODE_APP_LIST").addCategory(Intent.CATEGORY_DEFAULT), // xiaomi - set battery saver to no restrictions
